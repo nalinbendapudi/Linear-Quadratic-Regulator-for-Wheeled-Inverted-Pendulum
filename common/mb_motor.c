@@ -36,16 +36,24 @@ int mb_motor_init(){
 *******************************************************************************/
 int mb_motor_init_freq(int pwm_freq_hz){
     
-    
     // Setting motor pins to outputs.
     rc_gpio_init(MDIR1_PIN,GPIOHANDLE_REQUEST_OUTPUT);
     rc_gpio_init(MDIR2_PIN,GPIOHANDLE_REQUEST_OUTPUT);
+    rc_gpio_init(MOT_BRAKE_EN,GPIOHANDLE_REQUEST_OUTPUT);
 
-    rc_pwm_init(1,pwm_freq_hz);//rc_pwm_init(1,pwm_freq_hz);
-    rc_pwm_set_duty(1,'A',0.5);
-    rc_pwm_set_duty(1,'B',0.5);
+    // setting current sensing pins
+    rc_adc_init();
+
+    rc_pwm_init(1,pwm_freq_hz);
+
+    // initialize motors as off
+    rc_gpio_set_value(MDIR1_PIN, 0);
+    rc_gpio_set_value(MDIR2_PIN, 0);
+    rc_pwm_set_duty(1,'A',0);
+    rc_pwm_set_duty(1,'B',0);
 
     init_flag = 1;
+
     return 0;
 }
 
@@ -59,6 +67,7 @@ int mb_motor_cleanup(){
         fprintf(stderr,"ERROR: trying cleanup before motors have been initialized\n");
         return -1;
     }
+    mb_motor_brake(1);
     rc_gpio_set_value(MDIR1_PIN, 0);
     rc_gpio_set_value(MDIR2_PIN, 0);
 
@@ -77,8 +86,9 @@ int mb_motor_brake(int brake_en){
         fprintf(stderr,"ERROR: trying to enable brake before motors have been initialized\n");
         return -1;
     }
-    if(!brake_en) rc_gpio_init(MOT_BRAKE_EN,GPIOHANDLE_REQUEST_OUTPUT);
-
+    //if(brake_en) rc_gpio_init(MOT_BRAKE_EN,GPIOHANDLE_REQUEST_OUTPUT);
+    if(brake_en) rc_gpio_set_value(MOT_BRAKE_EN, 1);
+    else rc_gpio_set_value(MOT_BRAKE_EN, 0);
     return 0;
 }
 
@@ -94,6 +104,7 @@ int mb_motor_disable(){
         fprintf(stderr,"ERROR: trying to disable motors before motors have been initialized\n");
         return -1;
     }
+    mb_motor_brake(1);
     rc_pwm_set_duty(1,'A',0);
     rc_pwm_set_duty(1,'B',0);
     return 0;
@@ -109,29 +120,32 @@ int mb_motor_disable(){
 * returns 0 on success
 *******************************************************************************/
 int mb_motor_set(int motor, double duty){
-    
     if(unlikely(!init_flag)){
         fprintf(stderr,"ERROR: trying to rc_set_motor_all before they have been initialized\n");
         return -1;
     }
     //TO DO Reverse
     if (motor == LEFT_MOTOR){
+        duty *= MOT_1_POL;
         if (duty < 0){
             rc_gpio_set_value(MDIR1_PIN, 0);
+            duty *= -1;
         }
         else{
             rc_gpio_set_value(MDIR1_PIN, 1);
         }
-        rc_pwm_set_duty(1,'A', fabs(duty));
+        rc_pwm_set_duty(1,'A', duty);
     }
     else {
+        duty *= MOT_2_POL;
         if (duty < 0){
             rc_gpio_set_value(MDIR2_PIN, 0);
+            duty *= -1;
         }
         else{
             rc_gpio_set_value(MDIR2_PIN, 1);
         }   
-        rc_pwm_set_duty(1,'B', fabs(duty));
+        rc_pwm_set_duty(1,'B', duty);
     }
 
     return 0;
@@ -143,14 +157,14 @@ int mb_motor_set(int motor, double duty){
 * applies the same duty cycle argument to both motors
 *******************************************************************************/
 int mb_motor_set_all(double duty){
-
     if(unlikely(!init_flag)){
         printf("ERROR: trying to rc_set_motor_all before they have been initialized\n");
         return -1;
     }
-    rc_pwm_set_duty(1,'A',duty);
-    rc_pwm_set_duty(1,'B',duty);
-    
+
+    mb_motor_set(LEFT_MOTOR, duty);
+    mb_motor_set(RIGHT_MOTOR, duty);
+
     return 0;
 }
 
@@ -162,5 +176,12 @@ int mb_motor_set_all(double duty){
 *******************************************************************************/
 double mb_motor_read_current(int motor){
     //DRV8801 driver board CS pin puts out 500mV/A
-    return 0.0;
+    double current = 0.0;
+    if (motor == LEFT_MOTOR){
+        current = rc_adc_read_raw(MOT_1_CS);
+    }
+    else{
+        current = rc_adc_read_raw(MOT_2_CS);
+    }
+    return current;
 }

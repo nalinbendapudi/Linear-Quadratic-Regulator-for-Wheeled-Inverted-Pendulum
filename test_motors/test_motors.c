@@ -30,38 +30,31 @@ int main(){
     // not continue or there may be hardware conflicts. If it returned -4
     // then there was an invalid argument that needs to be fixed.
     if(rc_kill_existing_process(2.0)<-2) return -1;
-    printf("1");
 
 	// start signal handler so we can exit cleanly
     if(rc_enable_signal_handler()==-1){
                 fprintf(stderr,"ERROR: failed to start signal handler\n");
                 return -1;
     }
-    printf("2");
 
     if(mb_motor_init()<0){
         fprintf(stderr,"ERROR: failed to initialze mb_motors\n");
         return -1;
     }
-    printf("3");
 
     // make PID file to indicate your project is running
 	// due to the check made on the call to rc_kill_existing_process() above
 	// we can be fairly confident there is no PID file already and we can
 	// make our own safely.
 	rc_make_pid_file();
-	printf("4");
 
 	// done initializing so set state to RUNNING
 	rc_set_state(RUNNING); 
-	printf("5");
 
 	// Keep looping until state changes to EXITING
 	while(rc_get_state()!=EXITING){
-		printf("6");
 		// handle other states
 		if(rc_get_state()==RUNNING){
-			printf("Skipped init");
 			mb_motor_brake(1);
 			//run right forward for 1s
 			mb_motor_set(RIGHT_MOTOR, 0.8);
@@ -90,9 +83,8 @@ int main(){
 		rc_nanosleep(1E9);
 		rc_set_state(EXITING);
 	}
-	
 	// exit cleanly
 	mb_motor_cleanup();
-	rc_remove_pid_file();   // remove pid file LAST*/
+	rc_remove_pid_file();   // remove pid file LAST
 	return 0;
 }
