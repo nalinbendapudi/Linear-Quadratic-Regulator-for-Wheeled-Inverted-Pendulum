@@ -12,6 +12,7 @@
 #include <rc/adc.h>
 #include "mb_motor.h"
 #include "mb_defs.h"
+#include <math.h>
 
 // preposessor macros
 #define unlikely(x) __builtin_expect (!!(x), 0)
@@ -25,7 +26,6 @@ static int init_flag = 0;
 * initialize mb_motor with default frequency
 *******************************************************************************/
 int mb_motor_init(){
-    init_flag = 1;
     return mb_motor_init_freq(MB_MOTOR_DEFAULT_PWM_FREQ);
 }
 
@@ -36,31 +36,16 @@ int mb_motor_init(){
 *******************************************************************************/
 int mb_motor_init_freq(int pwm_freq_hz){
     
-    rc_pwm_init(1,DEFAULT_PWM_FREQ);//rc_pwm_init(1,pwm_freq_hz);
-    rc_pwm_set_duty(1,'A',0.5);
-    rc_pwm_set_duty(1,'B',0.5);
     
     // Setting motor pins to outputs.
     rc_gpio_init(MDIR1_PIN,GPIOHANDLE_REQUEST_OUTPUT);
     rc_gpio_init(MDIR2_PIN,GPIOHANDLE_REQUEST_OUTPUT);
-    rc_gpio_init(MOT_BRAKE_EN,GPIOHANDLE_REQUEST_OUTPUT);
 
-    printf("initialized");
-    printf("%d\n",rc_gpio_set_value(1,16, 1));
-    printf("%d\n",rc_gpio_set_value(1,28,0));
-    /*
-    while(1){
-        printf("In the loop");
-        rc_gpio_set_value(MOT_BRAKE_EN, 1);
-        rc_nanosleep(1E9);
-        rc_gpio_set_value(MOT_BRAKE_EN, 0);
-        rc_nanosleep(1E9);
-    }
-    */
-    // rc_gpio_init(MDIR1_PIN,GPIOHANDKE_REQUEST_INPUT);
-    // rc_gpio_init(MDIR2_PIN,GPIOHANDKE_REQUEST_INPUT);
+    rc_pwm_init(1,pwm_freq_hz);//rc_pwm_init(1,pwm_freq_hz);
+    rc_pwm_set_duty(1,'A',0.5);
+    rc_pwm_set_duty(1,'B',0.5);
 
-
+    init_flag = 1;
     return 0;
 }
 
@@ -92,9 +77,9 @@ int mb_motor_brake(int brake_en){
         fprintf(stderr,"ERROR: trying to enable brake before motors have been initialized\n");
         return -1;
     }
-    if(!brake_en) rc_gpio_set_value(MOT_BRAKE_EN, 1);
+    if(!brake_en) rc_gpio_init(MOT_BRAKE_EN,GPIOHANDLE_REQUEST_OUTPUT);
 
-   return 0;
+    return 0;
 }
 
 /*******************************************************************************
@@ -109,7 +94,8 @@ int mb_motor_disable(){
         fprintf(stderr,"ERROR: trying to disable motors before motors have been initialized\n");
         return -1;
     }
-    
+    rc_pwm_set_duty(1,'A',0);
+    rc_pwm_set_duty(1,'B',0);
     return 0;
 }
 
@@ -128,6 +114,25 @@ int mb_motor_set(int motor, double duty){
         fprintf(stderr,"ERROR: trying to rc_set_motor_all before they have been initialized\n");
         return -1;
     }
+    //TO DO Reverse
+    if (motor == LEFT_MOTOR){
+        if (duty < 0){
+            rc_gpio_set_value(MDIR1_PIN, 0);
+        }
+        else{
+            rc_gpio_set_value(MDIR1_PIN, 1);
+        }
+        rc_pwm_set_duty(1,'A', fabs(duty));
+    }
+    else {
+        if (duty < 0){
+            rc_gpio_set_value(MDIR2_PIN, 0);
+        }
+        else{
+            rc_gpio_set_value(MDIR2_PIN, 1);
+        }   
+        rc_pwm_set_duty(1,'B', fabs(duty));
+    }
 
     return 0;
 }
@@ -143,6 +148,8 @@ int mb_motor_set_all(double duty){
         printf("ERROR: trying to rc_set_motor_all before they have been initialized\n");
         return -1;
     }
+    rc_pwm_set_duty(1,'A',duty);
+    rc_pwm_set_duty(1,'B',duty);
     
     return 0;
 }

@@ -44,7 +44,7 @@ int main(){
         return -1;
     }
     printf("3");
-/*
+
     // make PID file to indicate your project is running
 	// due to the check made on the call to rc_kill_existing_process() above
 	// we can be fairly confident there is no PID file already and we can
@@ -55,7 +55,7 @@ int main(){
 	// done initializing so set state to RUNNING
 	rc_set_state(RUNNING); 
 	printf("5");
-	/*
+
 	// Keep looping until state changes to EXITING
 	while(rc_get_state()!=EXITING){
 		printf("6");
@@ -86,9 +86,9 @@ int main(){
 			//stop motors for 1s
 			mb_motor_disable();
 			rc_nanosleep(2E9);
-			rc_set_state(EXITING);
 		}
 		rc_nanosleep(1E9);
+		rc_set_state(EXITING);
 	}
 	
 	// exit cleanly
