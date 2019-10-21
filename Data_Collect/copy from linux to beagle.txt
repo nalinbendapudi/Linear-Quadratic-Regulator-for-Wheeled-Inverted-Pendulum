@@ -1,0 +1,2 @@
+sudo scp -r ~/balancebot_f19_team12/balancebot-f19 debian@192.168.7.2:~/
+
