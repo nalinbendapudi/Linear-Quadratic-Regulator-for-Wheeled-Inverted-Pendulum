@@ -68,8 +68,7 @@ int mb_motor_cleanup(){
         return -1;
     }
     mb_motor_brake(1);
-    rc_gpio_set_value(MDIR1_PIN, 0);
-    rc_gpio_set_value(MDIR2_PIN, 0);
+    rc_pwm_cleanup(1);
 
     return 0;
 }

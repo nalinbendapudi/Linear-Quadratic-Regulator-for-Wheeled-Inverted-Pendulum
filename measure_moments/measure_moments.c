@@ -92,6 +92,7 @@ int main(){
         int64_t time = utime_now();
         printf("%lld, %6.1f, %6.1f, %6.1f\n", time,   data.gyro[0], data.gyro[1],data.gyro[2]);
         fflush(stdout);
+        printf("%lld, %6.1f, %6.1f, %6.1f\n", time,   data.gyro[0], data.gyro[1],data.gyro[2]);
     }
 
 	// exit cleanly
