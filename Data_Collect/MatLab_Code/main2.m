@@ -7,18 +7,18 @@ global a1 a2 a3 a4 b1 b2 c1 c2 c3 K
 
 %% constants
 DT      = .01;          % 100hz controller loop
-m_w     = .03;          % mass of one wheel in Kg MEASURED
-m_b     = 1.0;          % balancebot body mass without wheels (TO BE DETERMINED)
-R_w       = .04;          % radius of wheel in m MEASURED
-L       = .100;         % center of wheel to Center of mass (TO BE DETERMINED)
-I_r     = 0.008;        % Inertia of body about center (not wheel axis) Kg*m^2 (TO BE DETERMINED)
+m_w     = .0923;          % mass of one wheel in Kg MEASURED
+m_b     = 1.1142;          % balancebot body mass without wheels (TO BE DETERMINED)
+R_w       = .08392/2;          % radius of wheel in m MEASURED
+L       = .08671;         % center of wheel to Center of mass (TO BE DETERMINED)
+I_r     = 0.0034;        % Inertia of body about center (not wheel axis) Kg*m^2 (TO BE DETERMINED)
 g       = 9.81;         % gravity m/s^2
 R_gb    = 20.4;         % gearbox ratio
 tau_s   = 0.50;         % Motor output stall Torque @ V_nominal (TO BE DETERMINED)
 w_free  = 50;           % Motor output free run speed @ V_nominal (TO BE DETERMINED)
 V_n     = 12.0;         % motor nominal drive voltage
 I_gb = 100.0*10^-5;     % inertial of motor armature and gearbox (TO BE DETERMINED)
-
+ 
 % add inertia of wheels modeled as disks and times two for both sides
 I_w = 2 * (I_gb+(m_w*R_w^2)/2);
 
