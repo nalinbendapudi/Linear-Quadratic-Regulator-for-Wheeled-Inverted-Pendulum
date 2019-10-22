@@ -177,10 +177,11 @@ double mb_motor_read_current(int motor){
     //DRV8801 driver board CS pin puts out 500mV/A
     double current = 0.0;
     if (motor == LEFT_MOTOR){
-        current = rc_adc_read_raw(MOT_1_CS);
+        current = rc_adc_read_volt(MOT_1_CS);
     }
     else{
-        current = rc_adc_read_raw(MOT_2_CS);
+        current = rc_adc_read_volt(MOT_2_CS);
     }
+    current /= 0.5; // converts read voltage to current at 500 mV/A
     return current;
 }

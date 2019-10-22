@@ -84,16 +84,19 @@ int main(){
 
 
     rc_set_state(RUNNING);
+
+    int i = 0;
     while(rc_get_state()!=EXITING){
-    	rc_nanosleep(1E9);
+    	rc_nanosleep(1E7);
+        i++;
         if(rc_mpu_read_gyro(&data)<0){
             printf("read gyro data failed\n");
         }
         int64_t time = utime_now();
         printf("%lld, %6.1f, %6.1f, %6.1f\n", time,   data.gyro[0], data.gyro[1],data.gyro[2]);
-        fflush(stdout);
-        printf("%lld, %6.1f, %6.1f, %6.1f\n", time,   data.gyro[0], data.gyro[1],data.gyro[2]);
+        if(i == 3000) rc_set_state(EXITING);
     }
+    fflush(stdout);
 
 	// exit cleanly
 	rc_encoder_eqep_cleanup();
