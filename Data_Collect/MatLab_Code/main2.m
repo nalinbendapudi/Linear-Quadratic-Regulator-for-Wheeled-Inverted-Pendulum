@@ -14,8 +14,8 @@ L       = .08671;         % center of wheel to Center of mass (TO BE DETERMINED)
 I_r     = 0.0034;        % Inertia of body about center (not wheel axis) Kg*m^2 (TO BE DETERMINED)
 g       = 9.81;         % gravity m/s^2
 R_gb    = 20.4;         % gearbox ratio
-tau_s   = 0.50;         % Motor output stall Torque @ V_nominal (TO BE DETERMINED)
-w_free  = 50;           % Motor output free run speed @ V_nominal (TO BE DETERMINED)
+tau_s   = 1.8462;         % Motor output stall Torque @ V_nominal (TO BE DETERMINED)
+w_free  = 0.5*(38.0944+37.9109);           % Motor output free run speed @ V_nominal (TO BE DETERMINED)
 V_n     = 12.0;         % motor nominal drive voltage
 I_gb = 100.0*10^-5;     % inertial of motor armature and gearbox (TO BE DETERMINED)
  

@@ -42,6 +42,11 @@ int main(){
         return -1;
     }
 
+    if(rc_encoder_eqep_init()==-1){
+        fprintf(stderr,"ERROR: failed to initialize eqep encoders\n");
+        return -1;
+    }
+
     // make PID file to indicate your project is running
 	// due to the check made on the call to rc_kill_existing_process() above
 	// we can be fairly confident there is no PID file already and we can
@@ -50,32 +55,51 @@ int main(){
 
 	// done initializing so set state to RUNNING
 	rc_set_state(RUNNING); 
-
+	double motor_right_pos = 0.0;
+	double motor_left_pos = 0.0;
 	// Keep looping until state changes to EXITING
 	while(rc_get_state()!=EXITING){
 		// handle other states
 		if(rc_get_state()==RUNNING){
 			mb_motor_brake(1);
 			//run right forward for 1s
+			motor_right_pos = rc_encoder_eqep_read(RIGHT_MOTOR);
+			motor_left_pos = rc_encoder_eqep_read(LEFT_MOTOR);
+			printf("motor R: %lf and motor L: %lf\n", motor_right_pos, motor_left_pos);
 			mb_motor_set(RIGHT_MOTOR, 0.8);
 			mb_motor_set(LEFT_MOTOR, 0.0);
 			rc_nanosleep(1E9);
+			motor_right_pos = rc_encoder_eqep_read(RIGHT_MOTOR);
+			motor_left_pos = rc_encoder_eqep_read(LEFT_MOTOR);
+			printf("motor R: %lf and motor L: %lf\n", motor_right_pos, motor_left_pos);
 			//run left forward for 1s
 			mb_motor_set(RIGHT_MOTOR, 0.0);
 			mb_motor_set(LEFT_MOTOR, 0.8);
 			rc_nanosleep(1E9);
+			motor_right_pos = rc_encoder_eqep_read(RIGHT_MOTOR);
+			motor_left_pos = rc_encoder_eqep_read(LEFT_MOTOR);
+			printf("motor R: %lf and motor L: %lf\n", motor_right_pos, motor_left_pos);
 			//run left backwards for 1s
 			mb_motor_set(RIGHT_MOTOR, 0.0);
 			mb_motor_set(LEFT_MOTOR, -0.8);
 			rc_nanosleep(1E9);
+			motor_right_pos = rc_encoder_eqep_read(RIGHT_MOTOR);
+			motor_left_pos = rc_encoder_eqep_read(LEFT_MOTOR);
+			printf("motor R: %lf and motor L: %lf\n", motor_right_pos, motor_left_pos);
 			//run right backwards for 1s
 			mb_motor_set(RIGHT_MOTOR, -0.8);
 			mb_motor_set(LEFT_MOTOR, 0.0);
 			rc_nanosleep(1E9);
+			motor_right_pos = rc_encoder_eqep_read(RIGHT_MOTOR);
+			motor_left_pos = rc_encoder_eqep_read(LEFT_MOTOR);
+			printf("motor R: %lf and motor L: %lf\n", motor_right_pos, motor_left_pos);
 			//set both forwards for 1s
 			mb_motor_brake(0);
 			mb_motor_set_all(0.8);
 			rc_nanosleep(1E9);
+			motor_right_pos = rc_encoder_eqep_read(RIGHT_MOTOR);
+			motor_left_pos = rc_encoder_eqep_read(LEFT_MOTOR);
+			printf("motor R: %lf and motor L: %lf\n", motor_right_pos, motor_left_pos);
 			//stop motors for 1s
 			mb_motor_disable();
 			rc_nanosleep(2E9);
