@@ -42,6 +42,18 @@ c3 = 1 + (a2/a1);
 %phi
 %phidot
 
+A = [0 1 0 0;
+     a4/(a3*c1) -(b2*c3)/(a3*c1) 0 (b2*c3)/(a3*c1);
+     0 0 0 1;
+     -(a2*a4)/(a1*a3*c1) (b2*c2)/(a1*c1) 0 -(b2*c2)/(a1*c1)];
+    B = [0 -(b1*c3)/(a3*c1) 0 (b1*c2)/(a1*c1) ]';
+    Q = [1 00 0 0
+    0 0.01 0 0
+    0 0 10 0
+    0 0 0 0.08];
+R = 100.0;
+K = lqr(A,B,Q,R)
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Nonlinear Control %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 n=360; % total number of points in simulation
 sim_time=4; % total simulation time
@@ -49,39 +61,45 @@ dt=sim_time/n;
 tspan=0:dt:sim_time;
 
 %hybrid switch
-phi_0 = 0;theta_0 = pi/4; phidot_0 = 0; thetadot_0 = 0;
+phi_0 = 0;theta_0 = pi/18; phidot_0 = 0; thetadot_0 = 0;
 X0=[theta_0, thetadot_0, phi_0, phidot_0 ];
-flag2 = 'p';
-options = odeset('Events', 'guard','RelTol', 1e-03, 'AbsTol', 1e-04);
-[t1,Y1]=ode15s(@(t,y) twbr_TRAJTRACK2(t,y,'s',flag2),tspan,X0,options); % Variable Time Step
-U1 = zeros(length(t1),1);
-for i =1:length(t1)
-    U1(i) = twbr_TRAJTRACK2(t1,Y1(i,:),'c',flag2);
+if abs(theta_0) <= pi/6
+    flag2 = 'l';
+    tspan = 0:dt:sim_time;
+    options = odeset('RelTol', 1e-03, 'AbsTol', 1e-04);
+    [t2,Y2]=ode45(@(t,y) twbr_TRAJTRACK2(t,y,'d',flag2),tspan,X0,options); % Variable Time Step
+    U2 = zeros(length(t2),1);
+    for i =1:length(t2)
+        U2(i) = twbr_TRAJTRACK2(t2,Y2(i,:),'c',flag2);
+    end
+
+    t = [t2];
+    Y = [Y2];
+    U = [U2];
+else
+    flag2 = 'p';
+    options = odeset('Events', 'guard','RelTol', 1e-03, 'AbsTol', 1e-04);
+    [t1,Y1]=ode15s(@(t,y) twbr_TRAJTRACK2(t,y,'s',flag2),tspan,X0,options); % Variable Time Step
+    U1 = zeros(length(t1),1);
+    for i =1:length(t1)
+       U1(i) = twbr_TRAJTRACK2(t1,Y1(i,:),'c',flag2);
+    end
+    flag2 = 'l';
+    tspan = t1(end):dt:sim_time;
+    options = odeset('RelTol', 1e-03, 'AbsTol', 1e-04);
+    [t2,Y2]=ode45(@(t,y) twbr_TRAJTRACK2(t,y,'d',flag2),tspan,Y1(end,:),options); % Variable Time Step
+    U2 = zeros(length(t2),1);
+    for i =1:length(t2)
+        U2(i) = twbr_TRAJTRACK2(t2,Y2(i,:),'c',flag2);
+    end
+
+    t = [t1;t2];
+    Y = [Y1;Y2];
+    U = [U1;U2];
 end
 
-flag2 = 'l';
-A = [0 1 0 0;
- a4/(a3*c1) -(b2*c3)/(a3*c1) 0 (b2*c3)/(a3*c1);
- 0 0 0 1;
- -(a2*a4)/(a1*a3*c1) (b2*c2)/(a1*c1) 0 -(b2*c2)/(a1*c1)];
-B = [0 -(b1*c3)/(a3*c1) 0 (b1*c2)/(a1*c1) ]';
-Q = [1 00 0 0
-0 0.01 0 0
-0 0 10 0
-0 0 0 0.5];
-R = 10000000.0;
-K = lqr(A,B,Q,R)
-tspan = t1(end):dt:sim_time;
-options = odeset('RelTol', 1e-03, 'AbsTol', 1e-04);
-[t2,Y2]=ode45(@(t,y) twbr_TRAJTRACK2(t,y,'d',flag2),tspan,Y1(end,:),options); % Variable Time Step
-U2 = zeros(length(t2),1);
-for i =1:length(t2)
-    U2(i) = twbr_TRAJTRACK2(t2,Y2(i,:),'c',flag2);
-end
 
-t = [t1;t2];
-Y = [Y1;Y2];
-U = [U1;U2];
+
 
 figure(1)
 plot(t,Y(:,1),t,-R_w*Y(:,3));
