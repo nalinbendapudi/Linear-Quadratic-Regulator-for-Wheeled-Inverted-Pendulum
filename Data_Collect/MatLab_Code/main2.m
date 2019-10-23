@@ -14,11 +14,11 @@ L       = .08671;         % center of wheel to Center of mass (TO BE DETERMINED)
 I_r     = 0.0034;        % Inertia of body about center (not wheel axis) Kg*m^2 (TO BE DETERMINED)
 g       = 9.81;         % gravity m/s^2
 R_gb    = 20.4;         % gearbox ratio
-tau_s   = 1.8462;         % Motor output stall Torque @ V_nominal (TO BE DETERMINED)
-w_free  = 0.5*(38.0944+37.9109);           % Motor output free run speed @ V_nominal (TO BE DETERMINED)
+tau_s   = 0.50;         % Motor output stall Torque @ V_nominal (TO BE DETERMINED)
+w_free  = 50;           % Motor output free run speed @ V_nominal (TO BE DETERMINED)
 V_n     = 12.0;         % motor nominal drive voltage
 I_gb = 100.0*10^-5;     % inertial of motor armature and gearbox (TO BE DETERMINED)
- 
+
 % add inertia of wheels modeled as disks and times two for both sides
 I_w = 2 * (I_gb+(m_w*R_w^2)/2);
 
@@ -49,7 +49,7 @@ dt=sim_time/n;
 tspan=0:dt:sim_time;
 
 %hybrid switch
-phi_0 = 0;theta_0 = pi/4; phidot_0 = 100; thetadot_0 = 0;
+phi_0 = 0;theta_0 = pi/4; phidot_0 = 0; thetadot_0 = 0;
 X0=[theta_0, thetadot_0, phi_0, phidot_0 ];
 flag2 = 'p';
 options = odeset('Events', 'guard','RelTol', 1e-03, 'AbsTol', 1e-04);
@@ -143,11 +143,6 @@ controllability = rank(ctrb(sys_ss))
 %%
 %LQR Design
 %Tune Your Gains Here and see the response
-Q = [1 00 0 0
-     0 0.01 0 0
-     0 0 10 0
-     0 0 0 0.08];
-R = 1.0;
 K = lqr(A,B,Q,R)
 
 Ac = [(A-B*K)];
@@ -176,34 +171,40 @@ figure
 set(get(AX(1),'Ylabel'),'String','body angle (radians)')
 set(get(AX(2),'Ylabel'),'String','body position (meters)')
 title('Step Response with LQR Control and Precompensator')
+figure
+plot(t,-x*K');
+legend('control \tau')
 % 
 % %% find discrete time system
-% sys_d = c2d(sys_ss,DT,'zoh')
-% A_d = sys_d.a;
-% B_d = sys_d.b;
-% C_d = sys_d.c;
-% D_d = sys_d.d;
-% [K_d] = dlqr(A_d,B_d,Q,R)
-% 
-% %% discrete time closed loop
-% A_dc = [(A_d-B_d*K_d)];
-% B_dc = [B_d];
-% C_dc = [C_d];
-% D_dc = [D_d];
-% 
-% Nbar_d = -0.11 % adjust Nbar for steadystate performance
-% 
-% states = {'x' 'x_dot' 'phi' 'phi_dot'};
-% inputs = {'phi'};
-% outputs = {'x'; 'phi'};
-% sys_dcl = ss(A_dc,B_dc*Nbar_d,C_dc,D_dc,DT,'statename',states,'inputname',inputs,'outputname',outputs);
-% 
-% t = 0:0.01:4;
-% dist = 0.1; % move balancebot 10cm
-% angle = (dist/R_w)*ones(size(t));
-% [y,t,x]=lsim(sys_dcl,angle,t);
-% figure
-% [AX,H1,H2] = plotyy(t,y(:,1),t,R_w*y(:,2),'plot');
-% set(get(AX(1),'Ylabel'),'String','body angle (radians)')
-% set(get(AX(2),'Ylabel'),'String','body position (meters)')
-% title('Discrete Step Response with LQR Control and Precompensator')
+sys_d = c2d(sys_ss,DT,'zoh')
+A_d = sys_d.a;
+B_d = sys_d.b;
+C_d = sys_d.c;
+D_d = sys_d.d;
+[K_d] = dlqr(A_d,B_d,Q,R)
+
+%% discrete time closed loop
+A_dc = [(A_d-B_d*K_d)];
+B_dc = [B_d];
+C_dc = [C_d];
+D_dc = [D_d];
+
+Nbar_d = -0.11 % adjust Nbar for steadystate performance
+
+states = {'x' 'x_dot' 'phi' 'phi_dot'};
+inputs = {'phi'};
+outputs = {'x'; 'phi'};
+sys_dcl = ss(A_dc,B_dc*Nbar_d,C_dc,D_dc,DT,'statename',states,'inputname',inputs,'outputname',outputs);
+
+t = 0:0.01:4;
+dist = 0.1; % move balancebot 10cm
+angle = (dist/R_w)*ones(size(t));
+[y,t,x]=lsim(sys_dcl,angle,t, X0);
+figure
+[AX,H1,H2] = plotyy(t,y(:,1),t,R_w*y(:,2),'plot');
+set(get(AX(1),'Ylabel'),'String','body angle (radians)')
+set(get(AX(2),'Ylabel'),'String','body position (meters)')
+title('Discrete Step Response with LQR Control and Precompensator')
+figure
+plot(t,-x*K_d');
+legend('control \tau')
