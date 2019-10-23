@@ -8,6 +8,9 @@ struct mb_state{
     float   phi;               // average wheel angle (rad)
     int     left_encoder;      // left encoder counts since last reading
     int     right_encoder;     // right encoder counts since last reading
+    float   wheelAngleL;
+    float   wheelAngleR;
+    float   gamma;
 
     //outputs
     float   left_cmd;  //left wheel command [-1..1]

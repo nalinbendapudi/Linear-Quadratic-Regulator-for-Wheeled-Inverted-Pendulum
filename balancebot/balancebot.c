@@ -19,6 +19,11 @@
 #include <rc/pthread.h>
 #include <rc/encoder_eqep.h>
 #include <rc/time.h>
+#include "../common/mb_motor.h"
+#include "../common/mb_defs.h"
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846
+#endif
 
 
 #include "balancebot.h"
@@ -168,14 +173,16 @@ void balancebot_controller(){
 	// Read IMU
 	mb_state.theta = mpu_data.dmp_TaitBryan[TB_PITCH_X];
 	// Read encoders
-	mb_state.left_encoder = rc_encoder_eqep_read(1)*2*M_Pi / GEAR_RATIO / ENCODER_RES;
-	mb_state.right_encoder = rc_encoder_eqep_read(2)*2*M_Pi / GEAR_RATIO / ENCODER_RES;;
+	mb_state.left_encoder = rc_encoder_eqep_read(1);
+	mb_state.right_encoder = rc_encoder_eqep_read(1);
+	mb_state.wheelAngleL = mb_state.left_encoder * 2.0 * M_PI / (ENC_1_POL * GEAR_RATIO * ENCODER_RES);
+	mb_state.wheelAngleR = mb_state.right_encoder * 2.0 * M_PI / (ENC_2_POL * GEAR_RATIO * ENCODER_RES);
     // Phi is average wheel rotation also add theta body angle to get absolute
     // wheel position in global frame since encoders are attached to the body
-    mb_state.phi = ((mb_state.left_encoder+mb_state.right_encoder)/2) + mb_state.theta;
+    mb_state.phi = ((mb_state.wheelAngleL+mb_state.wheelAngleR)/2) + mb_state.theta;
     // Update odometry 
  	// steering angle gamma estimate
-    mb_state.gamma = (mb_state.right_encoder-mb_state.left_encoder)  * (WHEEL_DIAMETER /2 /WHEEL_BASE);
+    mb_state.gamma = (mb_state.wheelAngleR-mb_state.wheelAngleL)  * (WHEEL_DIAMETER /2 /WHEEL_BASE);
 
  
 
@@ -186,7 +193,10 @@ void balancebot_controller(){
    	}
 
     if(mb_setpoints.manual_ctl){
-    	//send motor commands
+  //   	mb_state.left_cmd = d1_u - mb_state.d3_u;
+  //       mb_state.right_cmd = d1_u + mb_state.d3_u;
+		// mb_motor_set(LEFT_MOTOR, MOT_1_POL*mb_state.left_cmd);
+		// mb_motor_set(RIGHT_MOTOR, MOT_2_POL*mb_state.right_cmd);//send motor commands
    	}
 
 	XBEE_getData();
