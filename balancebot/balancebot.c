@@ -168,8 +168,8 @@ void balancebot_controller(){
 	// Read IMU
 	mb_state.theta = mpu_data.dmp_TaitBryan[TB_PITCH_X];
 	// Read encoders
-	mb_state.left_encoder = rc_encoder_eqep_read(1)*2*M_Pi;
-	mb_state.right_encoder = rc_encoder_eqep_read(2)*2*M_Pi;
+	mb_state.left_encoder = rc_encoder_eqep_read(1)*2*M_Pi / GEAR_RATIO / ENCODER_RES;
+	mb_state.right_encoder = rc_encoder_eqep_read(2)*2*M_Pi / GEAR_RATIO / ENCODER_RES;;
     // Phi is average wheel rotation also add theta body angle to get absolute
     // wheel position in global frame since encoders are attached to the body
     mb_state.phi = ((mb_state.left_encoder+mb_state.right_encoder)/2) + mb_state.theta;
