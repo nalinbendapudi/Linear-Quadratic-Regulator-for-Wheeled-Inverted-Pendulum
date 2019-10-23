@@ -133,6 +133,7 @@ int mb_motor_set(int motor, double duty){
         else{
             rc_gpio_set_value(MDIR1_PIN, 1);
         }
+        if(duty>1) duty = 1.0;
         rc_pwm_set_duty(1,'A', duty);
     }
     else {
@@ -144,6 +145,7 @@ int mb_motor_set(int motor, double duty){
         else{
             rc_gpio_set_value(MDIR2_PIN, 1);
         }   
+        if(duty>1) duty = 1.0;
         rc_pwm_set_duty(1,'B', duty);
     }
 

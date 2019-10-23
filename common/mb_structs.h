@@ -6,6 +6,10 @@ struct mb_state{
     // raw sensor inputs
     float   theta;             // body angle (rad)
     float   phi;               // average wheel angle (rad)
+    float   theta_d;           // body angle speed (rad/s)
+    float   phi_d;             // average wheel angle speed (rad/s)
+    float   theta_previous;
+    float   phi_previous;
     int     left_encoder;      // left encoder counts since last reading
     int     right_encoder;     // right encoder counts since last reading
     float   wheelAngleL;

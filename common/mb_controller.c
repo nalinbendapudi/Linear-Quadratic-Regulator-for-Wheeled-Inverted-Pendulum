@@ -18,6 +18,9 @@
 *
 *******************************************************************************/
 
+// gains for LQR controller
+float k1=0.0, k2=0.0, k3=0.0, k4=0.0;
+
 
 int mb_controller_init(){
     mb_controller_load_config();
@@ -27,33 +30,6 @@ int mb_controller_init(){
     return 0;
 }
 
-/*
-    This function gets the position of the motors and returns phi of the wheels
-*/
-int mb_encoder_read_pos(){
-    /*
-    double motorL_pos = 0.0, motorR_pos = 0.0;
-    motorL_pos = rc_encoder_eqep_read(LEFT_MOTOR);
-    motorR_pos = rc_encoder_eqep_read(RIGHT_MOTOR);
-    printf("motor 1: %lf and motor 2: %lf\n", motorL_pos, motorR_pos);
-    */
-
-    return 0;
-}
-
-/*
-    This function gets the velocity of the motors 
-*/
-int mb_encoder_read_velocity(){
-    /*
-    double motorL_pos = 0.0, motorR_pos = 0.0;
-    motorL_pos = rc_encoder_eqep_read(LEFT_MOTOR);
-    motorR_pos = rc_encoder_eqep_read(RIGHT_MOTOR);
-    printf("motor 1: %lf and motor 2: %lf\n", motorL_pos, motorR_pos);
-    */
-
-    return 0;
-}
 
 /*******************************************************************************
 * int mb_controller_load_config()
@@ -73,9 +49,9 @@ int mb_controller_load_config(){
     }
     /* TODO parse your config file here*/
     /* K gain from LQR*/
-    double k1, k2, k3, k4;
-    fscanf(file, "%lf %lf %lf %lf", &k1, &k2, &k3, &k4);
+    fscanf(file, "%f %f %f %f", &k1, &k2, &k3, &k4);
     fclose(file);
+    printf("Obtained gains: K1 = %f, K2 = %f, K3 = %f, K4 = %f\n", k1,k2,k3,k4);
     return 0;
 }
 
@@ -94,8 +70,17 @@ int mb_controller_load_config(){
 
 int mb_controller_update(mb_state_t* mb_state){
     /*TODO: Write your controller here*/
-    /* imu orientation dmp */
-    /* duty = -k1 * theta - k2 * theta_dot - k3 * phi - k4 * phi_dot;*/
+
+    // apply the controller to get duty
+    // get the duty cycle for the PID controller
+    // k1 = 5.0;
+    // float duty = -k1 * mb_state->theta;
+    // get the duty cycle for the LQR controller
+    float duty = -k1 * mb_state->theta - k2 * mb_state->theta_d - k3 * mb_state->phi - k4 * mb_state->phi_d;
+
+    mb_state->left_cmd = duty;
+    mb_state->right_cmd = duty;
+    
     return 0;
 }
 
