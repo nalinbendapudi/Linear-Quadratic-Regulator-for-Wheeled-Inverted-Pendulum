@@ -102,7 +102,7 @@ int main(){
 	// set up mpu configuration
 	rc_mpu_config_t mpu_config = rc_mpu_default_config();
 	mpu_config.dmp_sample_rate = SAMPLE_RATE_HZ;
-	mpu_config.orient = ORIENTATION_Z_UP;
+	mpu_config.orient = ORIENTATION_Z_DOWN;
 
 	// now set up the imu for dmp interrupt operation
 	if(rc_mpu_initialize_dmp(&mpu_data, mpu_config)){
@@ -167,7 +167,6 @@ int main(){
 * 
 *
 *******************************************************************************/
-int enable_motor = 0;
 void balancebot_controller(){
 
 	//mb_state_t* mb_state_previous = &mb_state;
@@ -177,12 +176,10 @@ void balancebot_controller(){
 	// mb_state.phi_previous = fmod(mb_state.phi,(2*M_PI));
 	pthread_mutex_lock(&state_mutex);
 
-
-
 	// Read IMU
     mb_state.theta = mpu_data.dmp_TaitBryan[TB_PITCH_X];
-    mb_state.theta = -fabs(mb_state.theta)/mb_state.theta*(fabs(mb_state.theta)-M_PI);
-    // mb_state.theta_d = (mb_state.theta - mb_state.theta_previous)/DT;
+    mb_state.theta_d = (mb_state.theta - mb_state.theta_previous)/DT;
+    //mb_state.theta = -fabs(mb_state.theta)/mb_state.theta*(fabs(mb_state.theta)-M_PI);
     // Read encoders
     mb_state.left_encoder = rc_encoder_eqep_read(1);
     mb_state.right_encoder = rc_encoder_eqep_read(2);
@@ -192,9 +189,6 @@ void balancebot_controller(){
     // Phi is average wheel rotation also add theta body angle to get absolute
     // wheel position in global frame since encoders are attached to the body
     mb_state.phi = ((mb_state.wheelAngleL+mb_state.wheelAngleR)/2) + mb_state.theta; // added a negative to be tested
-    mb_state.theta = -mb_state.theta; // negative to counter direction issue
-    mb_state.theta_d = (mb_state.theta - mb_state.theta_previous)/DT;
-    // mb_state.phi = fmod(mb_state.phi,(2*M_PI));
 
     mb_state.phi_d = (mb_state.phi - mb_state.phi_previous)/DT;
     // Update odometry 
@@ -202,19 +196,10 @@ void balancebot_controller(){
     mb_state.gamma = (mb_state.wheelAngleR-mb_state.wheelAngleL)  * (WHEEL_DIAMETER /2 /WHEEL_BASE);
 
 	mb_controller_update(&mb_state);
-	if(enable_motor>1200)
-	{
-		//send motor commands
-		mb_motor_set(LEFT_MOTOR, mb_state.left_cmd);
-		mb_motor_set(RIGHT_MOTOR, mb_state.right_cmd);
-	}
-	else enable_motor++;
-	
-	if(enable_motor == 1200){
-	    // reset encoders
-	    rc_encoder_eqep_write(1, 0);
-		rc_encoder_eqep_write(2, 0);
-	}
+	//send motor commands
+	mb_motor_set(LEFT_MOTOR, mb_state.left_cmd);
+	mb_motor_set(RIGHT_MOTOR, mb_state.right_cmd);
+
 
     // Calculate controller outputs
     

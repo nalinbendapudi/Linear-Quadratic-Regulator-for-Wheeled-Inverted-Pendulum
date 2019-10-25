@@ -7,6 +7,10 @@
 #include <sys/types.h>
 #include "mb_controller.h"
 #include "mb_defs.h"
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846
+#endif
+#include "../common/mb_motor.h"
 
 /*******************************************************************************
 * int mb_controller_init()
@@ -19,7 +23,9 @@
 *******************************************************************************/
 
 // gains for LQR controller
-float k1=0.0, k2=0.0, k3=0.0, k4=0.0;
+float k[4] = {0.0,0.0,0.0,0.0};
+float dk[4] = {0.0,0.0,0.0,0.0};
+int dt = 0;
 
 
 int mb_controller_init(){
@@ -49,9 +55,10 @@ int mb_controller_load_config(){
     }
     /* TODO parse your config file here*/
     /* K gain from LQR*/
-    fscanf(file, "%f %f %f %f", &k1, &k2, &k3, &k4);
+    fscanf(file, "%*[^\n]\n", NULL);
+    fscanf(file, "%f %f %f %f %f %f %f %f %d", &k[0], &k[1], &k[2], &k[3], &dk[0], &dk[1], &dk[2], &dk[3], &dt);
     fclose(file);
-    printf("Obtained gains: K1 = %f, K2 = %f, K3 = %f, K4 = %f\n", k1,k2,k3,k4);
+    printf("Obtained gains: K1 = %f, K2 = %f, K3 = %f, K4 = %f\n", k[0],k[1],k[2],k[3]);
     return 0;
 }
 
@@ -67,7 +74,9 @@ int mb_controller_load_config(){
 * return 0 on success
 *
 *******************************************************************************/
-
+int control_time = 0;
+char c = ' ';
+int i = 0;
 int mb_controller_update(mb_state_t* mb_state){
     /*TODO: Write your controller here*/
 
@@ -75,9 +84,35 @@ int mb_controller_update(mb_state_t* mb_state){
     // get the duty cycle for the PID controller
     // k1 = 5.0;
     // float duty = -k1 * mb_state->theta;
-    // get the duty cycle for the LQR controller
-    float duty = -k1 * mb_state->theta - k2 * mb_state->theta_d - k3 * mb_state->phi - k4 * mb_state->phi_d;
 
+    // get the duty cycle for the LQR controller
+    float duty = -k[0] * mb_state->theta - k[1] * mb_state->theta_d - k[2] * mb_state->phi - k[3] * mb_state->phi_d;
+    if(control_time == dt*100){
+        if(fabs(mb_state->theta)>M_PI/180 | fabs(mb_state->phi)>M_PI/180){
+            printf("\nController stopped. Currently tuning K%d = %f.\nPress i to increase, d to decrease, r to repeat, n for next k, p for previous, s for stop\n", i+1, k[i]);
+            mb_motor_disable();
+            c = getchar();
+            if( c == 'i') { // increase current k
+                control_time = 0;
+                k[i] += dk[i];
+                printf("Increased to k%d = %f\n", i+1, k[i]);
+            }
+            else if(c == 'r') {
+                control_time = 0;
+                printf("Not Changed. k%d = %f\n",i+1, k[i]);
+            }
+            else if(c == 'd') {
+                control_time = 0;
+                k[i] -= dk[i];
+                printf("Decreased to k%d = %f\n", i+1, k[i]);
+            }
+            else if(c == 'n') i++;
+            else if(c == 'p') i--;
+            else if(c == 's') printf("Final K values are %f %f %f %f\n", k[0], k[1], k[2], k[3]);
+        }
+    }
+    else control_time++;
+    
     mb_state->left_cmd = duty;
     mb_state->right_cmd = duty;
     
